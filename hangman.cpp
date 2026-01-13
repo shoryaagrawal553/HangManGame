@@ -1,152 +1,145 @@
 // C++ program to implement the Hangman game
+
 #include <algorithm>
+#include <cctype>
 #include <cstdlib>
 #include <ctime>
 #include <iostream>
 #include <string>
 #include <vector>
-// Define the maximum number of incorrect attempts allowed
-#define MAX_ATTEMPTS 6
+
 using namespace std;
+
+// Define the maximum number of incorrect attempts allowed
+static const int MAX_ATTEMPTS = 6;
+
 // HangmanGame class definition
-class HangmanGame{
+class HangmanGame {
 public:
     // Constructor to initialize game variables
     HangmanGame() {
-        
         srand(static_cast<unsigned int>(time(nullptr))); // Seed random number generator
-        secretWord = getRandomWord(); // Select a random word from the predefined list
-        currentWord = string(secretWord.length(), '_'); // Initialize the hidden word with underscores
-        attemptsLeft = MAX_ATTEMPTS; // Set the number of attempts
+        secretWord = getRandomWord();                     // Select a random word
+        currentWord = string(secretWord.length(), '_');   // Initialize hidden word
+        attemptsLeft = MAX_ATTEMPTS;                      // Set attempts
     }
 
     // Function to start and control the game flow
-    void play()
-    {
-        cout << "Welcome to Hangman!" << endl;
-        cout << "Category: Fruits" << endl;
-        cout << "You have " << attemptsLeft << " attempts to guess the fruit name." << endl;
+    void play() {
+        cout << "Welcome to Hangman!\n";
+        cout << "Category: Fruits\n";
+        cout << "You have " << attemptsLeft
+             << " attempts to guess the fruit name.\n";
 
-        // Main game loop: continues until attempts are exhausted or the word is guessed
-        while (attemptsLeft > 0)
-        {
-            displayGameInfo(); // Show the current game state
+        // Main game loop
+        while (attemptsLeft > 0) {
+            displayGameInfo();
+
             char guess;
             cout << "Guess a letter: ";
             cin >> guess;
 
-            // Check if the input is a valid alphabetic character
-            if (isalpha(guess))
-            {
-                guess = tolower(guess); // Convert to lowercase for consistency
-
-                // Check if the letter was already guessed
-                if (alreadyGuessed(guess))
-                {
-                    cout << "You've already guessed that letter." << endl;
-                }
-                else
-                {
-                    // Check if the guessed letter is in the secret word
-                    bool correctGuess = updateCurrentWord(guess);
-
-                    if (correctGuess)
-                    {
-                        cout << "Good guess!" << endl;
-                        // Check if the entire word has been guessed
-                        if (currentWord == secretWord)
-                        {
-                            displayGameInfo();
-                            cout << "Congratulations! You guessed the word: " << secretWord << endl;
-                            return; // End the game if guessed correctly
-                        }
-                    }
-                    else
-                    {
-                        cout << "Incorrect guess." << endl;
-                        attemptsLeft--; // Reduce attempts for incorrect guesses
-                        drawHangman(attemptsLeft); // Display hangman progress
-                    }
-                }
+            // Validate input
+            if (!isalpha(guess)) {
+                cout << "Please enter a valid letter.\n";
+                continue;
             }
-            else
-            {
-                cout << "Please enter a valid letter." << endl;
+
+            guess = static_cast<char>(tolower(guess));
+
+            if (alreadyGuessed(guess)) {
+                cout << "You've already guessed that letter.\n";
+                continue;
+            }
+
+            bool correctGuess = updateCurrentWord(guess);
+
+            if (correctGuess) {
+                cout << "Good guess!\n";
+
+                if (currentWord == secretWord) {
+                    displayGameInfo();
+                    cout << "Congratulations! You guessed the word: "
+                         << secretWord << "\n";
+                    return;
+                }
+            } else {
+                cout << "Incorrect guess.\n";
+                attemptsLeft--;
+                drawHangman(attemptsLeft);
             }
         }
 
-        // If no attempts are left, reveal the correct word
-        if (attemptsLeft == 0)
-        {
-            displayGameInfo();
-            cout << "You've run out of attempts. The word was: " << secretWord << endl;
-        }
+        // Game over
+        displayGameInfo();
+        cout << "You've run out of attempts. The word was: "
+             << secretWord << "\n";
     }
 
 private:
-    string secretWord;   // The word to be guessed
-    string currentWord;  // The word with guessed letters filled in
-    int attemptsLeft;    // Number of remaining incorrect guesses
-    vector<char> guessedLetters; // Stores guessed letters
+    string secretWord;
+    string currentWord;
+    int attemptsLeft;
+    vector<char> guessedLetters;
 
-    // Function to randomly select a word from a predefined list
-    string getRandomWord()
-    {
-        vector<string> words = {"apple", "banana", "mango", "orange", "papaya",
-                                "pineapple", "watermelon", "grapes", "strawberry",
-                                "blueberry", "raspberry", "cherry", "kiwi",
-                                "pomegranate", "guava", "peach", "pear", "plum",
-                                "lychee", "coconut", "lemon", "lime", "fig",
-                                "apricot", "dragonfruit", "starfruit",
-                                "passionfruit", "blackcurrant", "gooseberry",
-                                "mulberry", "custardapple", "jackfruit", "dates",
-                                "cranberry", "avocado", "persimmon", "tamarind",
-                                "cantaloupe", "honeydew", "sapodilla", "rambutan",
-                                "durian", "elderberry", "mangosteen", "bael",
-                                "acerola", "longan", "loquat", "breadfruit"};
-        
-        int index = rand() % words.size(); // Generate a random index
-        return words[index]; // Return a randomly selected word
+    // Select a random word
+    string getRandomWord() {
+        const vector<string> words = {
+            "apple", "banana", "mango", "orange", "papaya",
+            "pineapple", "watermelon", "grapes", "strawberry",
+            "blueberry", "raspberry", "cherry", "kiwi",
+            "pomegranate", "guava", "peach", "pear", "plum",
+            "lychee", "coconut", "lemon", "lime", "fig",
+            "apricot", "dragonfruit", "starfruit",
+            "passionfruit", "blackcurrant", "gooseberry",
+            "mulberry", "custardapple", "jackfruit", "dates",
+            "cranberry", "avocado", "persimmon", "tamarind",
+            "cantaloupe", "honeydew", "sapodilla", "rambutan",
+            "durian", "elderberry", "mangosteen", "bael",
+            "acerola", "longan", "loquat", "breadfruit"
+        };
+
+        int index = rand() % words.size();
+        return words[index];
     }
 
-    // Function to check if a letter has already been guessed
-    bool alreadyGuessed(char letter)
-    {
-        return find(guessedLetters.begin(), guessedLetters.end(), letter) != guessedLetters.end();
+    // Check if a letter was already guessed
+    bool alreadyGuessed(char letter) const {
+        return find(guessedLetters.begin(),
+                    guessedLetters.end(),
+                    letter) != guessedLetters.end();
     }
 
-    // Function to update the current word with a correct guess
-    bool updateCurrentWord(char letter)
-    {
+    // Update word with guessed letter
+    bool updateCurrentWord(char letter) {
         bool correctGuess = false;
-        for (int i = 0; i < secretWord.length(); i++)
-        {
-            if (secretWord[i] == letter)
-            {
-                currentWord[i] = letter; // Reveal the guessed letter
+
+        for (size_t i = 0; i < secretWord.length(); ++i) {
+            if (secretWord[i] == letter) {
+                currentWord[i] = letter;
                 correctGuess = true;
             }
         }
-        guessedLetters.push_back(letter); // Add letter to guessed letters list
+
+        guessedLetters.push_back(letter);
         return correctGuess;
     }
 
-    // Function to display the current game state
-    void displayGameInfo()
-    {
-        cout << "Word: " << currentWord << endl;
-        cout << "Attempts left: " << attemptsLeft << endl;
+    // Display current game state
+    void displayGameInfo() const {
+        cout << "Word: " << currentWord << "\n";
+        cout << "Attempts left: " << attemptsLeft << "\n";
         cout << "Guessed letters: ";
-        for (char letter : guessedLetters)
-        {
+
+        for (char letter : guessedLetters) {
             cout << letter << " ";
         }
-        cout << endl;
+
+        cout << "\n";
     }
 
-    // Function to progressively draw the hangman based on incorrect attempts
-    void drawHangman(int attemptsLeft){
-        // Simple ASCII art for different stages of the hangman
+    // Draw hangman based on remaining attempts
+    void drawHangman(int attemptsLeft) const {
         if (attemptsLeft == 5)
         {
             cout << " _____" << endl;
@@ -193,13 +186,9 @@ private:
     }
 };
 
-// Driver function to start the game
-int main(){
-    HangmanGame game; // Create an instance of HangmanGame
-    game.play(); // Start the game
+// Driver function
+int main() {
+    HangmanGame game;
+    game.play();
     return 0;
 }
-
-
-
-
